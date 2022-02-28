@@ -1,0 +1,71 @@
+version: '3.3'
+
+services:
+  wp:
+    image: wordpress:5.9.1 # https://hub.docker.com/_/wordpress/
+    ports:
+      - ${IP}:${WP_PORT}:80 # change ip if required
+    restart: always
+    volumes:
+      - ${DATA_DIR}/wp/config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+      - ${DATA_DIR}/wp/wp-app:/var/www/html # Full wordpress project
+      #- ${DATA_DIR}/wp/plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name # Plugin development
+      #- ${DATA_DIR}/wp/theme-name/trunk/:/var/www/html/wp-content/themes/theme-name # Theme development
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: "${DB_NAME}"
+      WORDPRESS_DB_USER: ${DB_ROOT_USER}
+      WORDPRESS_DB_PASSWORD: "${DB_ROOT_PASSWORD}"
+    depends_on:
+      - db
+    links:
+      - db
+
+  wpcli:
+    image: wordpress:cli
+    #restart: always
+    #command: sh -c "wp plugin install miniorange-openid-connect --activate"
+    volumes:
+      - ${DATA_DIR}/wp/config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+      - ${DATA_DIR}/wp/wp-app:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: "${DB_NAME}"
+      WORDPRESS_DB_USER: ${DB_ROOT_USER}
+      WORDPRESS_DB_PASSWORD: "${DB_ROOT_PASSWORD}"
+    depends_on:
+      - db
+      - wp
+
+  pma:
+    image: phpmyadmin/phpmyadmin:5.1.2
+    restart: always
+    environment:
+      # https://docs.phpmyadmin.net/en/latest/setup.html#docker-environment-variables
+      PMA_HOST: db
+      PMA_PORT: 3306 #Use container port
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+    ports:
+      - ${IP}:${PMA_PORT}:80
+    links:
+      - db:db
+
+  db:
+    image: mysql:8.0.28 # https://hub.docker.com/_/mysql/ - or mariadb https://hub.docker.com/_/mariadb
+    restart: always
+    ports:
+      - 127.0.0.1:${DB_PORT}:3306 # change ip if required
+    command: [
+        '--default_authentication_plugin=mysql_native_password',
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_unicode_ci'
+    ]
+    volumes:
+      - ${DATA_DIR}/wp-data:/docker-entrypoint-initdb.d
+      - ${DATA_DIR}/db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+
+volumes:
+  db_data:
