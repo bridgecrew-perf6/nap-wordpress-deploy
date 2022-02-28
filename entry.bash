@@ -21,6 +21,8 @@ load_secret_secret () {
     SECRET_NAME=$1
 
     gcloud secrets versions access latest --secret="${SECRET_NAME}" > ${SECRET_NAME}.txt
+    echo "" >> ${SECRET_NAME}.txt #Added new line
+    
     while read LINE; do
         TXT=$(echo ${LINE} | tr -d '[:space:]') #trim
 
