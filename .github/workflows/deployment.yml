@@ -28,8 +28,8 @@ jobs:
           BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
         fi
 
-        source "custom-${BRANCH}.cfg"
-        VERSION=${IMAGE_TAG} ### from custom.cfg ###
+        source "setting-${BRANCH}.cfg"
+        VERSION=${IMAGE_TAG} ### from setting.cfg ###
 
         echo ::set-output name=version::${VERSION}
         echo ::set-output name=branch::${BRANCH}
